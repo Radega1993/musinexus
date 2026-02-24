@@ -1,0 +1,106 @@
+# Social graph API (follow / block / mute) — Sprint 2
+# Not implemented in multi-profile-auth-foundation MVP.
+# Merge or reference from profiles.yaml when implementing.
+
+openapi: 3.1.0
+info:
+  title: MusiNexus Profiles Social API (Sprint 2)
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Social
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+
+paths:
+  /api/profiles/id/{profileId}/follow:
+    post:
+      tags: [Social]
+      summary: Follow a profile (actor = active profile)
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: No Content }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: Already following
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [Social]
+      summary: Unfollow a profile (actor = active profile)
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: No Content }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/profiles/id/{profileId}/block:
+    post:
+      tags: [Social]
+      summary: Block a profile (actor = active profile)
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: No Content }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/profiles/id/{profileId}/mute:
+    post:
+      tags: [Social]
+      summary: Mute a profile (actor = active profile)
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: No Content }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }

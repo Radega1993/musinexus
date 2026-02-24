@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProfileType {
+  ARTIST
+  GROUP
+  INSTITUTION
+  LABEL
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  EDITOR
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String? // null if Google-only user
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // MVP convenience: selected profile for acting in UI
+  activeProfileId String?
+  activeProfile   Profile? @relation("ActiveProfile", fields: [activeProfileId], references: [id], onDelete: SetNull)
+
+  memberships ProfileMember[]
+
+  // NextAuth
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Profile {
+  id          String      @id @default(cuid())
+  type        ProfileType
+  handle      String      @unique
+  displayName String
+  bio         String?
+  avatarUrl   String?
+  location    String?
+  links       Json? // [{label,url}]
+  instruments String[] // simple MVP
+  verified    Boolean     @default(false)
+
+  isPrivate Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members ProfileMember[]
+
+  // Social graph
+  followers Follow[] @relation("Following") // people following this profile
+  following Follow[] @relation("Follower") // profiles this profile follows
+
+  blockedBy Block[] @relation("BlockedProfile")
+  blocking  Block[] @relation("BlockerProfile")
+
+  mutedBy Mute[] @relation("MutedProfile")
+  muting  Mute[] @relation("MuterProfile")
+
+  // Reverse relation for User.activeProfile
+  activeForUsers User[] @relation("ActiveProfile")
+}
+
+model ProfileMember {
+  id        String     @id @default(cuid())
+  userId    String
+  profileId String
+  role      MemberRole @default(EDITOR)
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, profileId])
+  @@index([profileId])
+  @@index([userId])
+}
+
+model Follow {
+  id                 String   @id @default(cuid())
+  followerProfileId  String
+  followingProfileId String
+  createdAt          DateTime @default(now())
+
+  followerProfile  Profile @relation("Follower", fields: [followerProfileId], references: [id], onDelete: Cascade)
+  followingProfile Profile @relation("Following", fields: [followingProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([followerProfileId, followingProfileId])
+  @@index([followingProfileId])
+  @@index([followerProfileId])
+}
+
+model Block {
+  id               String   @id @default(cuid())
+  blockerProfileId String
+  blockedProfileId String
+  createdAt        DateTime @default(now())
+
+  blockerProfile Profile @relation("BlockerProfile", fields: [blockerProfileId], references: [id], onDelete: Cascade)
+  blockedProfile Profile @relation("BlockedProfile", fields: [blockedProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerProfileId, blockedProfileId])
+  @@index([blockedProfileId])
+}
+
+model Mute {
+  id             String   @id @default(cuid())
+  muterProfileId String
+  mutedProfileId String
+  createdAt      DateTime @default(now())
+
+  muterProfile Profile @relation("MuterProfile", fields: [muterProfileId], references: [id], onDelete: Cascade)
+  mutedProfile Profile @relation("MutedProfile", fields: [mutedProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([muterProfileId, mutedProfileId])
+  @@index([mutedProfileId])
+}

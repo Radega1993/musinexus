@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: MusiNexus Media API (MVP)
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Media
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+
+    MediaScope:
+      type: string
+      enum: [POST_ATTACHMENT, PROFILE_AVATAR]
+
+    PresignRequest:
+      type: object
+      required: [filename, contentType, size]
+      properties:
+        filename: { type: string }
+        contentType: { type: string }
+        size: { type: integer, format: int64, description: "Declared size in bytes; required so server can enforce scope limits" }
+        scope: { $ref: "#/components/schemas/MediaScope" }
+
+    PresignResponse:
+      type: object
+      required: [assetId, key, uploadUrl, expiresAt]
+      properties:
+        assetId: { type: string, description: "MediaAsset id (cuid)" }
+        key: { type: string, description: "Object key in storage" }
+        uploadUrl: { type: string, format: uri, description: "Presigned PUT URL" }
+        expiresAt: { type: string, format: date-time, description: "ISO 8601 expiry time for the presigned URL" }
+
+paths:
+  /api/media/presign:
+    post:
+      tags: [Media]
+      summary: Get presigned URL for direct upload
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PresignRequest" }
+      responses:
+        "201":
+          description: Created; use uploadUrl with PUT to upload the file
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PresignResponse" }
+        "401":
+          description: Not authenticated
+        "400":
+          description: Invalid payload or validation failed (contentType not allowed for scope, size over limit)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/media/{id}/confirm:
+    patch:
+      tags: [Media]
+      summary: Confirm upload and mark asset READY
+      description: Idempotent. If asset is already READY, returns 204. If object is missing in storage, returns 409.
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody: {}
+      responses:
+        "204":
+          description: Success (asset READY; or already READY)
+        "403":
+          description: Not owner of the asset
+        "404":
+          description: Asset not found
+        "409":
+          description: Object missing in storage (upload not completed)

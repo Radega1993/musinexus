@@ -1,0 +1,67 @@
+openapi: 3.1.0
+info:
+  title: MusiNexus Auth API (MVP)
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Auth
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
+    RegisterResponse:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string }
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register user with email/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RegisterResponse" }
+        "409":
+          description: Email already exists
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "400":
+          description: Invalid payload
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }

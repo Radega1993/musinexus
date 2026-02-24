@@ -1,0 +1,228 @@
+openapi: 3.1.0
+info:
+  title: MusiNexus Profiles API (MVP)
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Profiles
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+
+    ProfileType:
+      type: string
+      enum: [ARTIST, GROUP, INSTITUTION, LABEL]
+
+    Profile:
+      type: object
+      required: [id, type, handle, displayName, verified, isPrivate]
+      properties:
+        id: { type: string }
+        type: { $ref: "#/components/schemas/ProfileType" }
+        handle: { type: string }
+        displayName: { type: string }
+        bio: { type: string, nullable: true }
+        avatarUrl: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        links:
+          type: array
+          items:
+            type: object
+            required: [label, url]
+            properties:
+              label: { type: string }
+              url: { type: string }
+          nullable: true
+        instruments:
+          type: array
+          items: { type: string }
+        verified: { type: boolean }
+        isPrivate: { type: boolean }
+
+    CreateProfileRequest:
+      type: object
+      required: [type, handle, displayName]
+      properties:
+        type: { $ref: "#/components/schemas/ProfileType" }
+        handle: { type: string, minLength: 3 }
+        displayName: { type: string, minLength: 2 }
+        bio: { type: string }
+        location: { type: string }
+        instruments:
+          type: array
+          items: { type: string }
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName: { type: string }
+        bio: { type: string }
+        avatarUrl: { type: string }
+        location: { type: string }
+        links:
+          type: array
+          items:
+            type: object
+            required: [label, url]
+            properties:
+              label: { type: string }
+              url: { type: string }
+        instruments:
+          type: array
+          items: { type: string }
+        isPrivate: { type: boolean }
+
+    SetActiveProfileRequest:
+      type: object
+      required: [profileId]
+      properties:
+        profileId: { type: string }
+
+paths:
+  /api/me/profiles:
+    get:
+      tags: [Profiles]
+      summary: List profiles where the user is a member
+      security: [{ cookieAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [profiles]
+                properties:
+                  profiles:
+                    type: array
+                    items: { $ref: "#/components/schemas/Profile" }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/me/active-profile:
+    post:
+      tags: [Profiles]
+      summary: Set active profile for the current user (MVP convenience)
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetActiveProfileRequest" }
+      responses:
+        "204": { description: No Content }
+        "400":
+          description: Invalid payload
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403":
+          description: Not a member of that profile
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/profiles:
+    post:
+      tags: [Profiles]
+      summary: Create a new profile (creator becomes OWNER)
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateProfileRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "409":
+          description: Handle already exists
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/profiles/{handle}:
+    get:
+      tags: [Profiles]
+      summary: Public profile by handle (private profiles should be hidden unless follower/member)
+      parameters:
+        - name: handle
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "404":
+          description: Not found
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /api/profiles/id/{profileId}:
+    patch:
+      tags: [Profiles]
+      summary: Update profile (OWNER/ADMIN only)
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateProfileRequest" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401":
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403":
+          description: Forbidden
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
