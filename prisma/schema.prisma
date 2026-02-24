@@ -115,6 +115,8 @@ model Profile {
   likes       Like[]
   saves       Save[]
   comments    Comment[]
+  conversationMembers ConversationMember[]
+  messages    Message[]
 
   // Reverse relation for User.activeProfile
   activeForUsers User[]   @relation("ActiveProfile")
@@ -175,6 +177,45 @@ model Comment {
   authorProfile  Profile @relation(fields: [authorProfileId], references: [id], onDelete: Cascade)
 
   @@index([postId])
+  @@index([authorProfileId])
+}
+
+model Conversation {
+  id             String    @id @default(cuid())
+  createdAt      DateTime  @default(now())
+  lastMessageAt DateTime?
+
+  members ConversationMember[]
+  messages Message[]
+
+  @@index([lastMessageAt])
+}
+
+model ConversationMember {
+  id             String   @id @default(cuid())
+  conversationId String
+  profileId      String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  profile      Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, profileId])
+  @@index([conversationId])
+  @@index([profileId])
+}
+
+model Message {
+  id               String   @id @default(cuid())
+  conversationId   String
+  authorProfileId  String
+  body             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  authorProfile  Profile     @relation(fields: [authorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
   @@index([authorProfileId])
 }
 
