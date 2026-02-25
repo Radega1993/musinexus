@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { getSession } from "@/lib/session";
+import { getSessionOrRedirect } from "@/lib/session";
 import { Providers } from "@/components/Providers";
 import { AppShell } from "@/components/AppShell";
 import "./globals.css";
@@ -25,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
+  const session = await getSessionOrRedirect();
   return (
     <html lang="en" suppressHydrationWarning>
       <body

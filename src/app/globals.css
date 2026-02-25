@@ -1,8 +1,24 @@
 @import "tailwindcss";
 
+/* Brand tokens: CSS variables for theme switch (next-themes toggles .dark on html) */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --brand-bg: #ffffff;
+  --brand-panel: rgba(0, 0, 0, 0.04);
+  --brand-border: rgba(0, 0, 0, 0.1);
+  --brand-text: #0B1020;
+  --brand-muted: rgba(11, 16, 32, 0.65);
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --brand-bg: #0B1020;
+  --brand-panel: rgba(255, 255, 255, 0.06);
+  --brand-border: rgba(255, 255, 255, 0.12);
+  --brand-text: #EAF0FF;
+  --brand-muted: rgba(234, 240, 255, 0.75);
 }
 
 @theme inline {
@@ -10,17 +26,43 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Brand: reference CSS vars so light/dark switch is automatic */
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-panel: var(--brand-panel);
+  --color-brand-border: var(--brand-border);
+  --color-brand-text: var(--brand-text);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-primary: #2F6BFF;
+  --color-brand-primary-hover: #2457D6;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.08);
+  --blur-glass: 12px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base layout and body background */
+html,
+body {
+  height: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Concert/gradient background: use brand base and radial gradients */
+body {
+  background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(47, 107, 255, 0.25), transparent),
+    radial-gradient(ellipse 60% 60% at 80% 50%, rgba(139, 92, 246, 0.2), transparent),
+    var(--brand-bg);
+}
+
+/* Glass panel utility (theme-aware via --brand-panel/--brand-border) */
+.glass {
+  background: var(--brand-panel);
+  border: 1px solid var(--brand-border);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
 }
