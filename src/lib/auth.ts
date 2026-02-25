@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: { strategy: "database", maxAge: 30 * 24 * 60 * 60 },
-  pages: { signIn: "/api/auth/signin" },
+  pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
       name: "Credentials",

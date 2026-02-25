@@ -65,7 +65,7 @@ export default function ProfilePage() {
     if (!profile || profile.isOwnProfile || followLoading) return;
     setFollowLoading(true);
     const method = profile.isFollowing ? "DELETE" : "POST";
-    fetch(`/api/profiles/${profile.id}/follow`, { method })
+    fetch(`/api/profiles/id/${profile.id}/follow`, { method })
       .then((res) => {
         if (res.ok && (res.status === 200 || res.status === 201)) {
           return res.json().then((body: { isFollowing?: boolean }) => {

@@ -11,7 +11,7 @@ function problem(status: number, title: string, detail?: string) {
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ profileId: string }> }
 ) {
   const session = await getSession();
   if (!session?.user?.id) {
@@ -27,7 +27,7 @@ export async function POST(
     return problem(400, "Bad Request", "No active profile");
   }
 
-  const { id: followingProfileId } = await params;
+  const { profileId: followingProfileId } = await params;
   if (followingProfileId === activeProfileId) {
     return problem(403, "Forbidden", "Cannot follow yourself");
   }
@@ -62,7 +62,7 @@ export async function POST(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ profileId: string }> }
 ) {
   const session = await getSession();
   if (!session?.user?.id) {
@@ -78,7 +78,7 @@ export async function DELETE(
     return problem(400, "Bad Request", "No active profile");
   }
 
-  const { id: followingProfileId } = await params;
+  const { profileId: followingProfileId } = await params;
   const profile = await prisma.profile.findUnique({
     where: { id: followingProfileId },
     select: { id: true },
