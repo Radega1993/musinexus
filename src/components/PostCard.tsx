@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export interface PostCardAuthor {
   handle: string;
@@ -237,25 +238,30 @@ export function PostCard({
     <>
       <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <header className="mb-2 flex items-center gap-3">
-          {author.avatarUrl ? (
-            <Image
-              src={author.avatarUrl}
-              alt=""
-              width={40}
-              height={40}
-              className="rounded-full"
-              unoptimized
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
-              {author.displayName}
-            </p>
-            <p className="truncate text-sm text-zinc-500">@{author.handle}</p>
-          </div>
-          <time className="text-xs text-zinc-400" dateTime={createdAt}>
+          <Link
+            href={`/${author.handle}`}
+            className="flex items-center gap-3 min-w-0 flex-1"
+          >
+            {author.avatarUrl ? (
+              <Image
+                src={author.avatarUrl}
+                alt=""
+                width={40}
+                height={40}
+                className="rounded-full shrink-0"
+                unoptimized
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                {author.displayName}
+              </p>
+              <p className="truncate text-sm text-zinc-500">@{author.handle}</p>
+            </div>
+          </Link>
+          <time className="text-xs text-zinc-400 flex-shrink-0" dateTime={createdAt}>
             {date}
           </time>
         </header>

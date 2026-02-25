@@ -120,6 +120,8 @@ model Profile {
 
   // Reverse relation for User.activeProfile
   activeForUsers User[]   @relation("ActiveProfile")
+
+  @@index([displayName])
 }
 
 model Post {
